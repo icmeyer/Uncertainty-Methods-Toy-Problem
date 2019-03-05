@@ -1,2 +1,2 @@
-# Uncertainty-Methods-Toy-Problem
-Comparison of nuclear data uncertainty methods
+# Uncertainty Methods Toy Problem
+Jupyter notebook for comparison of nuclear data uncertainty methods.
