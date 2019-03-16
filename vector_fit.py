@@ -1,5 +1,18 @@
 import numpy as np
 
+## The vector space of functions we are dealing with: Generic rational fractions with an offset and an entire part.
+# > The entire part is specified by the set of coefficients.
+# > If no coefficients are provided (the empty set), the rational function is build with a simple offset, the default value of which is zero.
+def rational_function(z, poles, residues, offset=0, poly_coeff=()):
+    if poly_coeff == ():
+        poly_order = 0
+    ## print("The rational_function function was not given an entire polynomial part to build.")
+    else:
+        poly_order = poly_coeff.shape[0]
+    return  sum(residues[n]/(z-poles[n]) for n in range(poles.size)) + offset + sum(poly_coeff[n]*z**(n+1) for n in range(poly_order))
+
+
+
 # Vector Fitting Algorithm
 # The simplest barycentric SK iterations: no relaxation, no QR, no orthogonal basis, no real numbers
 # The space of functions we are learning in is that of proper rational fraction of degree zero (poles + offset)
