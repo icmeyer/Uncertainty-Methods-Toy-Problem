@@ -79,7 +79,7 @@ def dΣγ_dΓ(E, Γ):
 
 def exact_poles_and_residues(Γ):
     """
-        Calculta the exact poles and residues for the SLBW capture cross section (with BS approximation)
+        Calcultes the exact poles and residues for the SLBW capture cross section (with BS approximation)
         
         Parameters
         ----------
@@ -109,6 +109,38 @@ def multipole_Σ(z, Π): ## The most simple SLBW caputre resonance, with BS appr
         float : capture cross section
         """
     return  (1/z**2) * np.real(sum( Π[j][1]/(z-Π[j][0]) for j in range(Π.shape[0]))) #+ np.conj(Π[j][1])/(z-np.conj(Π[j][0])) for j in range(Π.shape[0]) ) )
+
+#def multipole_dΣ_dΓ(z, Π, dΠ_dΓ): ## The most simple SLBW caputre resonance, with BS approximation
+#    """
+#        Evaluate SLBW capture cross section (with BS approximation)
+#        
+#        Parameters
+#        ----------
+#        z : square-root-ofenergy (eV) (on {E,+} sheet of Riemann surface)
+#        Π :  Multipole Parameters [{pole, residue}], for poles in the lower half of the complex plane (in the {E,+} sheet of the Rieman surface).
+#        dΠ_dΓ : Jacobians of poles and residues with respect to all the resonance parameters Γ [{d_pole_dΓ, d_residue_dΓ}]
+#        Returns
+#        -------
+#        array (size of resonance parameters) : differential capture cross sections in multipole representation
+#        """
+#    return  (1/z**2) * np.real(sum( dΠ_dΓ[j][1]/(z-Π[j][0]) + Π[j][1]*dΠ_dΓ[j][0]/(z-Π[j][0])**2 for j in range(Π.shape[0]))) #+ np.conj(Π[j][1])/(z-np.conj(Π[j][0])) for j in range(Π.shape[0]) ) )
+
+
+def multipole_dΣ_dΓ(z, Π, dp_dΓ, dr_dΓ): ## The most simple SLBW caputre resonance, with BS approximation
+    """
+        Evaluate SLBW capture cross section (with BS approximation)
+        
+        Parameters
+        ----------
+        z : square-root-ofenergy (eV) (on {E,+} sheet of Riemann surface)
+        Π :  Multipole Parameters [{pole, residue}], for poles in the lower half of the complex plane (in the {E,+} sheet of the Rieman surface).
+        dΠ_dΓ : Jacobians of poles and residues with respect to all the resonance parameters Γ [{d_pole_dΓ, d_residue_dΓ}]
+        Returns
+        -------
+        array (size of resonance parameters) : differential capture cross sections in multipole representation
+        """
+    return  np.array([ (1/z**2) * np.real(sum( dr_dΓ[j][i]/(z-Π[j][0]) + Π[j][1]*dp_dΓ[j][i]/(z-Π[j][0])**2 for j in range(Π.shape[0]))) for i in range(dp_dΓ.shape[1])])
+
 
 
 def z_space_Σγ(z, Γ): ## The most simple SLBW caputre resonance, with BS approximation
