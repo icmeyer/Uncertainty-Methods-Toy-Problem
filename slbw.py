@@ -7,8 +7,7 @@ from data import ρ0
 #
 #    Parameters
 #    ----------
-#    E : energy (eV)
-#    Γ :  Resonance Parameters [mean, neutron width, gamma width]
+#    Γ :  Resonance Parameters [Eλ resonance energy, Γn neutron width, Γγ gamma width]
 #
 #    Returns
 #    -------
@@ -23,14 +22,13 @@ def evaluate_Σγ(E, Γ): ## The most simple SLBW caputre resonance, with BS app
         
         Parameters
         ----------
-        E : energy (eV)
-        Γ :  Resonance Parameters [mean, neutron width, gamma width]
+        Γ :  Resonance Parameters [Eλ resonance energy, Γn neutron width, Γγ gamma width]
         
         Returns
         -------
         float : capture cross section
         """
-    return (np.pi*Γ[1]*Γ[2]/(ρ0**2*Γ[0]**0.5*E**0.5))/((Γ[0]-E)**2+(Γ[1]+ Γ[2])**2)
+    return (np.pi*Γ[1]*Γ[2]/(ρ0**2*Γ[0]**0.5*E**0.5))/((Γ[0]-E)**2+(Γ[1]+ Γ[2])**2/4)
 
 
 ## SLBW Derivative Equations
@@ -62,8 +60,7 @@ def dΣγ_dΓ(E, Γ):
         
         Parameters
         ----------
-        E : Energy (eV)
-        Γ :  Resonance Parameters [resonance energy, neutron width, gamma width]
+        Γ :  Resonance Parameters [Eλ resonance energy, Γn neutron width, Γγ gamma width]
         
         Returns
         -------
@@ -83,11 +80,28 @@ def exact_poles_and_residues(Γ):
         
         Parameters
         ----------
-        Γ :  Resonance Parameters [mean, neutron width, gamma width]
+        Γ :  Resonance Parameters [Eλ resonance energy, Γn neutron width, Γγ gamma width]
         
         Returns
         -------
         Π :  Multipole Parameters [{pole, residue}], for poles in the lower half of the complex plane (in the {E,+} sheet of the Rieman surface).
+        """
+    ελ = Γ[0] + 1j*(Γ[1]+Γ[2])/2
+    r1 = 1j*np.pi*Γ[1]*Γ[2]/(ρ0**2*Γ[0]**0.5*(Γ[1]+ Γ[2]))
+    p1 = np.sqrt(ελ)
+    return np.array([ [ p1, r1 ] , [-p1 , r1] ])
+
+def exact_poles_and_residues_differentials(Γ):
+    """
+        Calcultes the exact poles and residues for the SLBW capture cross section (with BS approximation)
+        
+        Parameters
+        ----------
+        Γ :  Resonance Parameters [Eλ resonance energy, Γn neutron width, Γγ gamma width]
+        
+        Returns
+        -------
+        dΠ_dΓ :  Multipole Parameters [{pole, residue}], for poles in the lower half of the complex plane (in the {E,+} sheet of the Rieman surface).
         """
     ελ = Γ[0] + 1j*(Γ[1]+Γ[2])
     r1 = -1j*np.pi*Γ[1]*Γ[2]/(2*ρ0**2*Γ[0]**0.5*(Γ[1]+ Γ[2]))
