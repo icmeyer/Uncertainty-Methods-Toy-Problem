@@ -16,7 +16,7 @@ from data import ρ0
 #    return (np.pi*Γ[1]*Γ[2]/(ρ0**2*E**0.5*Γ[0]**0.5))/((E-Γ[0])**2+((Γ[1]*(E/Γ[0])**(1/2)+ Γ[2])/2)**2)
 
 
-def evaluate_Σγ(E, Γ): ## The most simple SLBW caputre resonance, with BS approximation
+def exact_Σγ(E, Γ): ## The most simple SLBW caputre resonance, with BS approximation
     """
         Evaluate SLBW capture cross section (with BS approximation)
         
@@ -53,7 +53,7 @@ def evaluate_Σγ(E, Γ): ## The most simple SLBW caputre resonance, with BS app
 
 
 # SLBW Derivative Equations
-def dΣγ_dΓ(E, Γ):
+def exact_dΣγ_dΓ(E, Γ):
     """
         Derivative of capture cross section with respect to resonance
         parameters
@@ -66,9 +66,9 @@ def dΣγ_dΓ(E, Γ):
         -------
         np.array : [dΣγ_dEλ , dΣγ_dΓn , dΣγ_dΓγ]
         """
-    dΣγ_dEλ = evaluate_Σγ(E, Γ)*( (-1)/(2*Γ[0]) + 2*(E-Γ[0])*evaluate_Σγ(E, Γ)*(ρ0**2*E**0.5*Γ[0]**(0.5))/(np.pi*Γ[1]*Γ[2]))
-    dΣγ_dΓn = evaluate_Σγ(E, Γ)*( 1/(Γ[1]) - 2*(Γ[1] + Γ[2])*evaluate_Σγ(E, Γ)*(ρ0**2*E**0.5*Γ[0]**(0.5))/(np.pi*Γ[1]*Γ[2]))
-    dΣγ_dΓγ = evaluate_Σγ(E, Γ)*( 1/(Γ[2]) - 2*(Γ[1] + Γ[2])*evaluate_Σγ(E, Γ)*(ρ0**2*E**0.5*Γ[0]**(0.5))/(np.pi*Γ[1]*Γ[2]))
+    dΣγ_dEλ = exact_Σγ(E, Γ)*( (-1)/(2*Γ[0]) - 2*(Γ[0]-E)*exact_Σγ(E, Γ)*(ρ0**2*E**0.5*Γ[0]**(0.5))/(np.pi*Γ[1]*Γ[2]))
+    dΣγ_dΓn = exact_Σγ(E, Γ)*( 1/(Γ[1]) - 1/2*(Γ[1] + Γ[2])*exact_Σγ(E, Γ)*(ρ0**2*E**0.5*Γ[0]**(0.5))/(np.pi*Γ[1]*Γ[2]))
+    dΣγ_dΓγ = exact_Σγ(E, Γ)*( 1/(Γ[2]) - 1/2*(Γ[1] + Γ[2])*exact_Σγ(E, Γ)*(ρ0**2*E**0.5*Γ[0]**(0.5))/(np.pi*Γ[1]*Γ[2]))
     return np.array([dΣγ_dEλ , dΣγ_dΓn , dΣγ_dΓγ])
 
 
@@ -91,7 +91,7 @@ def exact_poles_and_residues(Γ):
     p1 = np.sqrt(ελ)
     return np.array([ [ p1, r1 ] , [-p1 , r1] ])
 
-def exact_poles_and_residues_differentials(Γ):
+def exact_poles_and_residues_differentials_dΠ_dΓ(Γ):
     """
         Calcultes the exact poles and residues for the SLBW capture cross section (with BS approximation)
         
@@ -103,10 +103,27 @@ def exact_poles_and_residues_differentials(Γ):
         -------
         dΠ_dΓ :  Multipole Parameters [{pole, residue}], for poles in the lower half of the complex plane (in the {E,+} sheet of the Rieman surface).
         """
-    ελ = Γ[0] + 1j*(Γ[1]+Γ[2])
-    r1 = 1j*np.pi*Γ[1]*Γ[2]/(2*ρ0**2*Γ[0]**0.5*(Γ[1]+ Γ[2]))
+    ελ = Γ[0] - 1j*(Γ[1]+Γ[2])/2
+    r1 = 1j*np.pi*Γ[1]*Γ[2]/(ρ0**2*Γ[0]**0.5*(Γ[1]+ Γ[2]))
     p1 = np.sqrt(ελ)
-    return np.array([ [ p1, r1 ] , [-p1 , r1] ])
+
+    dp1_dEλ = 1/(2*p1)
+    dr1_dEλ = - r1/(2*Γ[0])
+
+    dp1_dΓn = -1j/(4*p1)
+    dr1_dΓn = r1*( 1/Γ[1] - 1/(Γ[1]+Γ[2]) )
+
+    dp1_dΓγ = -1j/(4*p1)
+    dr1_dΓγ = r1*( 1/Γ[2] - 1/(Γ[1]+Γ[2]) )
+
+    dΠ_dΓ = np.array([ [[dp1_dEλ, dr1_dEλ] , [-dp1_dEλ , dr1_dEλ]] , [[dp1_dΓn, dr1_dΓn] , [-dp1_dΓn , dr1_dΓn]] , [[dp1_dΓγ, dr1_dΓγ] , [-dp1_dΓγ , dr1_dΓγ]] ])
+    
+#    dp_dΓ = np.array([ [ dp1_dEλ , -dp1_dEλ] , [dp1_dΓn , -dp1_dΓn] , [dp1_dΓγ,-dp1_dΓγ] ])
+#    dr_dΓ = np.array([ [ dr1_dEλ , dr1_dEλ] , [dr1_dΓn , dr1_dΓn] , [dr1_dΓγ, dr1_dΓγ] ])
+
+    dp_dΓ = np.array([ [ dp1_dEλ , dp1_dΓn , dp1_dΓγ] , [ -dp1_dEλ , -dp1_dΓn , -dp1_dΓγ] ])
+    dr_dΓ = np.array([ [ dr1_dEλ , dr1_dΓn , dr1_dΓγ] , [ dr1_dEλ , dr1_dΓn , dr1_dΓγ] ])
+    return dp_dΓ , dr_dΓ
 
 
 def multipole_Σ(z, Π): ## The most simple SLBW caputre resonance, with BS approximation
@@ -189,7 +206,7 @@ def analytic_Σγ(z, Γ): ## The most simple SLBW caputre resonance, with BS app
         """
     ελ = Γ[0] - 1j*(Γ[1]+Γ[2])/2
     b = (2*np.pi*Γ[1]*Γ[2])/(ρ0**2*Γ[0]**0.5*(Γ[1]+ Γ[2]))
-    return  1/z * ( (-1j*b)/(ελ - z**2) + np.conj((-1j*b)/(ελ - z**2)) )/2
+    return  1/z * ( (-1j*b)/(ελ - z**2) + np.conj((-1j*b))/(np.conj(ελ) - z**2) )/2
 
 def analytic_dΣγ_dΓ(z, Γ):
     """
@@ -206,9 +223,9 @@ def analytic_dΣγ_dΓ(z, Γ):
         np.array : [dΣγ_dEλ , dΣγ_dΓn , dΣγ_dΓγ]
         """
     ελ = Γ[0] - 1j*(Γ[1]+Γ[2])/2
-    dΣγ_dEλ = analytic_Σγ(z, Γ)*( (-1)/(2*Γ[0]) + (-1j/(ελ - z**2)**2  + np.conj(-1j)/(np.conj(ελ) - z**2)**2)/( 1j/(ελ - z**2) + np.conj(1j)/(np.conj(ελ) - z**2) ) )
-    dΣγ_dΓn = analytic_Σγ(z, Γ)*( 1/Γ[1] - (-1j/(ελ - z**2)**2  + 1j/(np.conj(ελ) - z**2)**2)/( 1j/(ελ - z**2) - 1j/(np.conj(ελ) - z**2) ) )
-    dΣγ_dΓγ = analytic_Σγ(z, Γ)*( 1/Γ[2] - (-1j/(ελ - z**2)**2  + 1j/(np.conj(ελ) - z**2)**2)/( 1j/(ελ - z**2) - 1j/(np.conj(ελ) - z**2) ) )
+    dΣγ_dEλ = analytic_Σγ(z, Γ)*( (-1)/(2*Γ[0]) - (1j/(ελ - z**2)**2  + np.conj(1j)/(np.conj(ελ) - z**2)**2)/( 1j/(ελ - z**2) + np.conj(1j)/(np.conj(ελ) - z**2) ) )
+    dΣγ_dΓn = analytic_Σγ(z, Γ)*( 1/Γ[1] - 1/(Γ[1]+Γ[2]) - 1/2*(1/(ελ - z**2)**2  + 1/(np.conj(ελ) - z**2)**2)/( 1j/(ελ - z**2) + np.conj(1j)/(np.conj(ελ) - z**2) ) )
+    dΣγ_dΓγ = analytic_Σγ(z, Γ)*( 1/Γ[2] - 1/(Γ[1]+Γ[2]) - 1/2*(1/(ελ - z**2)**2  + 1/(np.conj(ελ) - z**2)**2)/( 1j/(ελ - z**2) + np.conj(1j)/(np.conj(ελ) - z**2) ) )
     return np.array([dΣγ_dEλ , dΣγ_dΓn , dΣγ_dΓγ])
 
 
