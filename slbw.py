@@ -2,7 +2,7 @@ import numpy as np
 from data import ρ0
 
 import scipy
-import scipy.special as faddeeva
+import scipy.special
 
 #def evaluate_Σγ(E, Γ): ## The most simple SLBW caputre resonance
 #    """
@@ -34,7 +34,7 @@ def exact_Σγ(E, Γ): ## The most simple SLBW caputre resonance, with BS approx
     return (np.pi*Γ[1]*Γ[2]/(ρ0**2*Γ[0]**0.5*E**0.5))/((Γ[0]-E)**2+(Γ[1]+ Γ[2])**2/4)
 
 
-def exact_Real_SLBW(E, Γ): ## The OK Real[•] version of E-space Breit-Wigner profile
+def exact_Real_SLBW(E, Γ , r): ## The OK Real[•] version of E-space Breit-Wigner profile
     """
         Evaluate SLBW capture cross section (with BS approximation)
         
@@ -46,55 +46,50 @@ def exact_Real_SLBW(E, Γ): ## The OK Real[•] version of E-space Breit-Wigner 
         -------
         float : capture cross section
         """
-    b = 2*np.pi*Γ[1]*Γ[2]/(ρ0**2*Γ[0]**0.5*(Γ[1]+ Γ[2]))
     ελ = Γ[0] - 1j*(Γ[1]+ Γ[2])/2
-    return 1/(E**0.5)*np.real(-1j*b/(ελ - E))
+    return 1/(E**0.5)*np.real(r/(ελ - E))
 
-def zeroK_exact_SLBW_χψ_Σγ(E, Γ): ## The OK Real[•] version of E-space Breit-Wigner profile
-    """
-        Evaluate SLBW capture cross section (with BS approximation)
-        
-        Parameters
-        ----------
-        Γ :  Resonance Parameters [Eλ resonance energy, Γn neutron width, Γγ gamma width]
-        
-        Returns
-        -------
-        float : capture cross section
-        """
-    b = 2*np.pi*Γ[1]*Γ[2]/(ρ0**2*Γ[0]**0.5*(Γ[1]+ Γ[2]))
-    x =  (Γ[0] - E)/((Γ[1]+ Γ[2])/2)
-    return (b/((Γ[1]+ Γ[2])/2))/(E**0.5)*(1/(x**2 + 1))
 
-def TK_approx_SLBW_Im_ψ_Σγ(E, Γ, T): ## The OK Real[•] version of E-space Breit-Wigner profile
-    """
-        Evaluate SLBW capture cross section (with BS approximation)
-        
-        Parameters
-        ----------
-        Γ :  Resonance Parameters [Eλ resonance energy, Γn neutron width, Γγ gamma width]
-        
-        Returns
-        -------
-        float : capture cross section
-        """
-    kB = 8.617333262145*10**(-5)
-    A = 238
-    β = (kB * T /A)**0.5
-    τ = 4*E*(β/(Γ[1]+ Γ[2]))**2
-    a = 0.0
-    b = 2*np.pi*Γ[1]*Γ[2]/(ρ0**2*Γ[0]**0.5*(Γ[1]+ Γ[2]))
-    x =  (Γ[0] - E)/((Γ[1]+ Γ[2])/2)
-    z = (1 -1j*x)/(2*τ**0.5)
+def w_faddeeva(z): #this is only for integral representation purpose use only
     if np.imag(z) > 0 :
-        return  (a/((Γ[1]+ Γ[2])/2))/(E**0.5)*(np.pi/(4*τ))**0.5*np.real(faddeeva.wofz(z)) + (b/((Γ[1]+ Γ[2])/2))/(E**0.5)*(np.pi/(4*τ))**0.5*np.imag(faddeeva.wofz(z))
+        return scipy.special.wofz(z)
     else :
-        w_sym_z = - np.conj(faddeeva.wofz(np.conj(z)))
-        return (a/((Γ[1]+ Γ[2])/2))/(E**0.5)*(np.pi/(4*τ))**0.5*np.real(w_sym_z )  + (b/((Γ[1]+ Γ[2])/2))/(E**0.5)*(np.pi/(4*τ))**0.5*np.imag(w_sym_z )
+        return - np.conj(scipy.special.wofz(np.conj(z)))
 
 
+def χ0(x):  ## the antisymmetric χ function at 0 K
+    return x/(1 + x**2)
 
-def TK_approx_SLBW_Faddeeva_Σγ(E, Γ, T): ## The OK Real[•] version of E-space Breit-Wigner profile
+def χT_Faddeeva_approx(x,τ):  ## the antisymmetric χ function approximated at T K
+    z = (1 - 1j*x)/(-1j*2*(τ**0.5))
+    return (np.pi/(4*τ))**0.5*np.imag(w_faddeeva(z))
+
+def ψ0(x):  ## the symmetric ψ function at 0 K
+    return 1/(1 + x**2)
+
+def ψT_Faddeeva_approx(x,τ):  ## the symmetric ψ function approximated at T K
+    z = (1 - 1j*x)/(-1j*2*(τ**0.5))
+    return (np.pi/(4*τ))**0.5*np.real(w_faddeeva(z))
+
+
+def zeroK_exact_SLBW_χψ_Σγ(E, Γ, a , b): ## The OK Real[•] version of E-space Breit-Wigner profile
+    """
+        Evaluate SLBW capture cross section (with BS approximation)
+        
+        Parameters
+        ----------
+        Γ :  Resonance Parameters [Eλ resonance energy, Γn neutron width, Γγ gamma width]
+        
+        Returns
+        -------
+        float : capture cross section
+        """
+    Γtot = (Γ[1]+ Γ[2])
+    x =  (Γ[0] - E)/(Γtot/2)
+    return (a/(Γtot/2))/(E**0.5)*χ0(x) + (b/(Γtot/2))/(E**0.5)*ψ0(x)
+
+
+def TK_approx_SLBW_χψ_Σγ(E, Γ, a, b, T): ## The OK Real[•] version of E-space Breit-Wigner profile
     """
         Evaluate SLBW capture cross section (with BS approximation)
         
@@ -110,18 +105,34 @@ def TK_approx_SLBW_Faddeeva_Σγ(E, Γ, T): ## The OK Real[•] version of E-spa
     A = 238
     β = (kB * T /A)**0.5
     τ = 4*E*(β/(Γ[1]+ Γ[2]))**2
-    a = 0
-    b = 2*np.pi*Γ[1]*Γ[2]/(ρ0**2*Γ[0]**0.5*(Γ[1]+ Γ[2]))
+    Γtot = (Γ[1]+ Γ[2])
+    x =  (Γ[0] - E)/(Γtot/2)
+    z = (1 -1j*x)/(2*τ**0.5)
+    return (a/(Γtot/2))/(E**0.5)*χT_Faddeeva_approx(x,τ) + (b/(Γtot/2))/(E**0.5)*ψT_Faddeeva_approx(x,τ)
+
+
+
+def TK_approx_SLBW_Faddeeva_Σγ(E, Γ, r, T ): ## The OK Real[•] version of E-space Breit-Wigner profile
+    """
+        Evaluate SLBW capture cross section (with BS approximation)
+        
+        Parameters
+        ----------
+        Γ :  Resonance Parameters [Eλ resonance energy, Γn neutron width, Γγ gamma width]
+        
+        Returns
+        -------
+        float : capture cross section
+        """
+    kB = 8.617333262145*10**(-5)
+    A = 238
+    β = (kB * T /A)**0.5
+    τ = 4*E*(β/(Γ[1]+ Γ[2]))**2
+
     ελ = Γ[0] - 1j*(Γ[1]+ Γ[2])/2
     x =  (Γ[0] - E)/((Γ[1]+ Γ[2])/2)
-    Z0 = (np.conj(ελ) - E)/(2*1j*β*E**0.5)
-#    return (1/E**0.5)*np.real( ( ((a-1j*b)*np.pi**0.5)/(2*β*E**0.5) )*faddeeva.wofz(Z0) )
-    if np.imag(Z0) > 0 :
-        return (1/E**0.5)*np.real( ( ((a-1j*b)*np.pi**0.5)/(2*β*E**0.5) )*faddeeva.wofz(Z0) )
-    else :
-        w_sym_Z0 = - np.conj(faddeeva.wofz(np.conj(Z0)))
-        return (1/E**0.5)*np.real( ( ((a-1j*b)*np.pi**0.5)/(2*β*E**0.5) )*w_sym_Z0 )
-
+    Z0 = (np.conj(ελ) - E)/(2*β*E**0.5)
+    return (1/E**0.5)*np.real( ( (1j*r*np.pi**0.5)/(2*β*E**0.5) )*w_faddeeva(Z0) )
 
 # SLBW Derivative Equations
 def exact_dΣγ_dΓ(E, Γ):
@@ -213,6 +224,25 @@ def multipole_Σ(z, Π): ## The most simple SLBW caputre resonance, with BS appr
     return  (1/z**2) * np.real(sum( Π[j][1]/(z-Π[j][0]) for j in range(Π.shape[0]))) #+ np.conj(Π[j][1])/(z-np.conj(Π[j][0])) for j in range(Π.shape[0]) ) )
 
 
+def approx_multipole_Doppler_Σ(z, Π, T): ## The most simple SLBW caputre resonance, with BS approximation
+    """
+        Evaluate SLBW capture cross section (with BS approximation)
+        
+        Parameters
+        ----------
+        z : square-root-ofenergy (eV) (on {E,+} sheet of Riemann surface)
+        Π :  Multipole Parameters [{pole, residue}], for poles in the lower half of the complex plane (in the {E,+} sheet of the Rieman surface).
+        
+        Returns
+        -------
+        float : capture cross section
+        """
+    kB = 8.617333262145*10**(-5)
+    A = 238
+    β = (kB * T /A)**0.5
+    return  (1/z**2) * np.real(-(1j*np.pi**0.5/β) * sum( Π[j][1]*w_faddeeva((z-Π[j][0])/β) for j in range(Π.shape[0])))
+
+
 
 
 def multipole_dΣ_dΓ(z, Π, dp_dΓ, dr_dΓ): ## The most simple SLBW caputre resonance, with BS approximation
@@ -229,6 +259,7 @@ def multipole_dΣ_dΓ(z, Π, dp_dΓ, dr_dΓ): ## The most simple SLBW caputre re
         array (size of resonance parameters) : differential capture cross sections in multipole representation
         """
     return  np.array([ (1/z**2) * np.real(sum( dr_dΓ[j][i]/(z-Π[j][0]) + Π[j][1]*dp_dΓ[j][i]/(z-Π[j][0])**2 for j in range(Π.shape[0]))) for i in range(dp_dΓ.shape[1])])
+
 
 
 
