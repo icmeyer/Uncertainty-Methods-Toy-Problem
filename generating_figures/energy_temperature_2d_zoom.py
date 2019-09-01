@@ -26,14 +26,9 @@ else:
     N_g = 1000 # Points at which to evaluate cross section at temperature
 
 A = 238
-E_g_orig = np.logspace(-6, 4, N_g_orig) # Energy groups (here log-spaced) for flux ψ
+E_g_orig = np.logspace(-2, 3, N_g_orig) # Energy groups (here log-spaced) for flux ψ
 z_g_orig = E_g_orig**0.5 # Energy groups (here log-spaced) for flux ψ
 
-# Add more points at resonance
-N_extra = 1000
-E_extra = np.linspace(6.0, 7, N_extra)
-E_g_orig = np.union1d(E_extra, E_g_orig)
-z_g_orig = E_g_orig**0.5 # Energy groups (here log-spaced) for flux ψ
 
 a = 0 
 Γ = μ_Γ_U238
@@ -53,14 +48,13 @@ slbw_abs_error_vecs = []
 slbw_rel_error_vecs = []
 multipole_abs_error_vecs = []
 multipole_rel_error_vecs = []
-
 # Ts = np.linspace(1e-3, 1e5, N_Ts)
 Ts = np.logspace(-3, 6, N_Ts)
 
 # E_g = np.linspace(1e-6, 1e4, 1000)
-E_g = np.logspace(-6, 4, N_g)
+E_g = np.logspace(0, 2, N_g)
 # Add more points at resonance
-N_extra = 100
+N_extra = 1000
 E_extra = np.linspace(2.0, 12, N_extra)
 E_g = np.union1d(E_extra, E_g)
 z_g = E_g**0.5
@@ -126,7 +120,7 @@ import matplotlib as mpl
 from matplotlib.ticker import FormatStrFormatter
 from matplotlib.lines import Line2D
 scaling = 1.8
-ratio = [10, 4]
+ratio = [5, 4]
 figsize = [ratio[0]*scaling, ratio[1]*scaling]
 mpl.rcParams['figure.figsize'] = figsize
 if nice_font:
@@ -145,7 +139,7 @@ fig = plt.figure()
 
 # Plot Multipole Error
 plot_grid = mp_plot_grid
-ax1 = fig.add_subplot(121)
+ax1 = fig.add_subplot(111)
 grid1 = ax1.pcolormesh(E_g[subset_low:subset_high], Ts, plot_grid, norm=colors.LogNorm(vmin=min_color, vmax=max_color), cmap='plasma')
 if choose_levels:
     CS = ax1.contour(E_g[subset_low:subset_high], Ts, plot_grid, levels, linestyles=styles, colors='k')
@@ -161,29 +155,29 @@ ax1.set_yscale('log')
 # ax1.yaxis.set_major_formatter(FormatStrFormatter('%.1E'))
 # ax1.grid()
 
-# Plot SLBW Error
-plot_grid = slbw_plot_grid
-ax2 = fig.add_subplot(122)
-grid2 = ax2.pcolormesh(E_g[subset_low:subset_high], Ts, plot_grid, norm=colors.LogNorm(vmin=min_color, vmax=max_color), cmap='plasma')
-if choose_levels:
-    CS = ax2.contour(E_g[subset_low:subset_high], Ts, plot_grid, levels, linestyles=styles, colors='k')
-    # ax2.clabel(CS, levels, inline=1, fmt='%1.1e', fontsize=10)
-else: 
-    CS = ax2.contour(E_g[subset_low:subset_high], Ts, plot_grid, colors='k')
-    ax2.clabel(CS, fmt='%1.1e', fontsize=10)
-ax2.set_xscale('log')
-ax2.set_xlabel('E (eV)')
-ax2.set_ylabel('T (Kelvin)')
-ax2.set_title('SLBW Relative Error')
-ax2.set_yscale('log')
-# ax2.yaxis.set_major_formatter(FormatStrFormatter('%.1E'))
-# ax2.grid()
+# # Plot SLBW Error
+# plot_grid = slbw_plot_grid
+# ax2 = fig.add_subplot(122)
+# grid2 = ax2.pcolormesh(E_g[subset_low:subset_high], Ts, plot_grid, norm=colors.LogNorm(vmin=min_color, vmax=max_color), cmap='plasma')
+# if choose_levels:
+#     CS = ax2.contour(E_g[subset_low:subset_high], Ts, plot_grid, levels, linestyles=styles, colors='k')
+#     # ax2.clabel(CS, levels, inline=1, fmt='%1.1e', fontsize=10)
+# else: 
+#     CS = ax2.contour(E_g[subset_low:subset_high], Ts, plot_grid, colors='k')
+#     ax2.clabel(CS, fmt='%1.1e', fontsize=10)
+# ax2.set_xscale('log')
+# ax2.set_xlabel('E (eV)')
+# ax2.set_ylabel('T (Kelvin)')
+# ax2.set_title('SLBW Relative Error')
+# ax2.set_yscale('log')
+# # ax2.yaxis.set_major_formatter(FormatStrFormatter('%.1E'))
+# # ax2.grid()
 
 fig.tight_layout(w_pad=1.0)
 
 # Add color bar with axes [left, bottom, width, height]
-fig.subplots_adjust(right=0.85)
-cbar_ax = fig.add_axes([0.90, 0.30, 0.05, 0.65])
+fig.subplots_adjust(right=0.80)
+cbar_ax = fig.add_axes([0.85, 0.30, 0.05, 0.65])
 norm=colors.LogNorm(vmin=min_color, vmax=max_color)
 print('Attempted min/max for LogNorm color bar: {:E}/{:E}'.format(min_color, max_color))
 # Make my own ticks
@@ -193,20 +187,6 @@ max_pow = np.floor(np.log10(max_color))
 tick_locations = np.logspace(min_pow, max_pow, (max_pow - min_pow)+1)
 colorbar = mpl.colorbar.ColorbarBase(cbar_ax, cmap='plasma', norm=norm, ticks=tick_locations)
 # colorbar = fig.colorbar(grid2, cax=cbar_ax)
-
-# Colorbar testing junk below
-# cbar_ax.xaxis.set_major_formatter(FormatStrFormatter(fmts[i]))
-# test = cbar_ax.yaxis.get_ticklabels()
-# test2 = cbar_ax.yaxis.get_ticklocs()
-# test_scalarmappable = mpl.cm.ScalarMappable(norm=colors.LogNorm(vmin=min_color, vmax=max_color), cmap='plasma')
-# test_scalarmappable = mpl.cm.ScalarMappable(norm=colors.Normalize(vmin=min_color, vmax=max_color), cmap='plasma')
-# print('Tick Labels Should Show up here')
-# print(test)
-# print(test2)
-# cbarlabels = np.logspace(np.log10(min_color), np.log10(max_color), num=5, endpoint=True)
-# cbar_ax.yaxis.set_ticks(test2)
-# cbar_ax.yaxis.set_ticklabels(test)
-# cbar_ax.yaxis.set_major_formatter(FormatStrFormatter('%.0E'))
 
 # Add contour legend [left, bottom, width, height]
 contour_ax = fig.add_axes([0.90, 0.10, 0.05, 0.1])
@@ -220,7 +200,7 @@ contour_ax.set_axis_off()
 end = time.perf_counter()
 total_time = (end-start)/60
 title = 'Energy Range: {:e} - {:e} eV \n N_Points 0K: {:d} \n N_Points Broadened: {:d} \n N Temperatures: {:d} \n Time: {:f} min'.format(E_g_orig[0], E_g_orig[-1], N_g_orig, N_g, N_Ts, total_time)
-filename = 'Energy Range: {:e} - {:e} eV  N_Points 0K: {:d}  N_Points Broadened: {:d}  N Temperatures: {:d}  Time: {:f} min'.format(E_g_orig[0], E_g_orig[-1], N_g_orig, N_g, N_Ts, total_time)
+filename = 'Multipole_Only - Energy Range: {:e} - {:e} eV  N_Points 0K: {:d}  N_Points Broadened: {:d}  N Temperatures: {:d}  Time: {:f} min'.format(E_g_orig[0], E_g_orig[-1], N_g_orig, N_g, N_Ts, total_time)
 # fig.suptitle(title)
 
 fig.savefig('./figs/'+filename+".pdf")

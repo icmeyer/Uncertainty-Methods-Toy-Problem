@@ -17,7 +17,7 @@ from vector_fit import VF_algorithm, rational_function
 
 # Build energy grid
 # E_g = np.linspace(1e-6, 1e4, 1000)
-N_g = 10000
+N_g = 1000
 E_g = np.logspace(-6, 4, N_g)
 z_g = E_g**0.5
 subset_low = np.searchsorted(E_g, 1e-4)
