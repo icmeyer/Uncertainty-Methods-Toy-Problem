@@ -34,7 +34,7 @@ def exact_Σγ(E, Γ): ## The most simple SLBW caputre resonance, with BS approx
     return (np.pi*Γ[1]*Γ[2]/(ρ0**2*Γ[0]**0.5*E**0.5))/((Γ[0]-E)**2+(Γ[1]+ Γ[2])**2/4)
 
 
-def exact_Real_SLBW(E, Γ , r): ## The OK Real[•] version of E-space Breit-Wigner profile
+def exact_Real_SLBW(E, Γ , α): ## The OK Real[•] version of E-space Breit-Wigner profile
     """
         Evaluate SLBW capture cross section (with BS approximation)
         
@@ -47,28 +47,28 @@ def exact_Real_SLBW(E, Γ , r): ## The OK Real[•] version of E-space Breit-Wig
         float : capture cross section
         """
     ελ = Γ[0] - 1j*(Γ[1]+ Γ[2])/2
-    return 1/(E**0.5)*np.real(r/(ελ - E))
+    return 1/(E**0.5)*np.real(α/(ελ - E))
 
 
 def w_faddeeva(z): #this is only for integral representation purpose use only
     if np.imag(z) > 0 :
         return scipy.special.wofz(z)
     else :
-        return - np.conj(scipy.special.wofz(np.conj(z)))
+        return - scipy.special.wofz(-z) # - np.conj(scipy.special.wofz(np.conj(z)))
 
 
 def χ0(x):  ## the antisymmetric χ function at 0 K
     return x/(1 + x**2)
 
 def χT_Faddeeva_approx(x,τ):  ## the antisymmetric χ function approximated at T K
-    z = (1 - 1j*x)/(-1j*2*(τ**0.5))
+    z = (x + 1j)/(2*(τ**0.5))
     return (np.pi/(4*τ))**0.5*np.imag(w_faddeeva(z))
 
 def ψ0(x):  ## the symmetric ψ function at 0 K
     return 1/(1 + x**2)
 
 def ψT_Faddeeva_approx(x,τ):  ## the symmetric ψ function approximated at T K
-    z = (1 - 1j*x)/(-1j*2*(τ**0.5))
+    z = (x + 1j)/(2*(τ**0.5))
     return (np.pi/(4*τ))**0.5*np.real(w_faddeeva(z))
 
 
@@ -112,7 +112,7 @@ def TK_approx_SLBW_χψ_Σγ(E, Γ, a, b, T): ## The OK Real[•] version of E-s
 
 
 
-def TK_approx_SLBW_Faddeeva_Σγ(E, Γ, r, T ): ## The OK Real[•] version of E-space Breit-Wigner profile
+def TK_approx_SLBW_Faddeeva_Σγ(E, Γ, α, T ): ## The OK Real[•] version of E-space Breit-Wigner profile
     """
         Evaluate SLBW capture cross section (with BS approximation)
         
@@ -132,7 +132,7 @@ def TK_approx_SLBW_Faddeeva_Σγ(E, Γ, r, T ): ## The OK Real[•] version of E
     ελ = Γ[0] - 1j*(Γ[1]+ Γ[2])/2
     x =  (Γ[0] - E)/((Γ[1]+ Γ[2])/2)
     Z0 = (np.conj(ελ) - E)/(2*β*E**0.5)
-    return (1/E**0.5)*np.real( ( (1j*r*np.pi**0.5)/(2*β*E**0.5) )*w_faddeeva(Z0) )
+    return (1/E**0.5)*np.imag( (np.conj(α)*np.pi**0.5)/(2*β*E**0.5) * w_faddeeva(Z0) )
 
 # SLBW Derivative Equations
 def exact_dΣγ_dΓ(E, Γ):
@@ -240,14 +240,14 @@ def approx_multipole_Doppler_Σ(z, Π, T): ## The most simple SLBW caputre reson
     kB = 8.617333262145*10**(-5)
     A = 238
     β = (kB * T /A)**0.5
-    return  (1/z**2) * np.real(-(1j*np.pi**0.5/β) * sum( Π[j][1]*w_faddeeva((z-Π[j][0])/β) for j in range(Π.shape[0])))
+    return  (1/z**2) * np.real( (np.pi**0.5/(1j*β)) * sum( Π[j][1] * w_faddeeva( ((z-Π[j][0])/β) ) for j in range(Π.shape[0])))
 
 
 
 
 def multipole_dΣ_dΓ(z, Π, dp_dΓ, dr_dΓ): ## The most simple SLBW caputre resonance, with BS approximation
     """
-        Evaluate SLBW capture cross section (with BS approximation)
+        Evaluate SLBW (with BS approximation) capture cross section differential with respect to resonance parameters Γ
         
         Parameters
         ----------
@@ -261,6 +261,58 @@ def multipole_dΣ_dΓ(z, Π, dp_dΓ, dr_dΓ): ## The most simple SLBW caputre re
     return  np.array([ (1/z**2) * np.real(sum( dr_dΓ[j][i]/(z-Π[j][0]) + Π[j][1]*dp_dΓ[j][i]/(z-Π[j][0])**2 for j in range(Π.shape[0]))) for i in range(dp_dΓ.shape[1])])
 
 
+def multipole_dΣ_dΠ(z, Π): ## The most simple SLBW caputre resonance, with BS approximation
+    """
+        Evaluate SLBW (with BS approximation) capture cross section differential with respect to multipoles (represented as a set of twice as much real parameters (the real and imaginary part of each multipole complex parameter))
+        
+        Parameters
+        ----------
+        z : square-root-ofenergy (eV) (on {E,+} sheet of Riemann surface)
+        Π :  Multipole Parameters [{pole, residue}], for poles in the lower half of the complex plane (in the {E,+} sheet of the Rieman surface).
+
+        Returns
+        -------
+        array (size of resonance multipoles times two) : differential capture cross sections (functions of z) [ dΣ_dRe[p] , dΣ_dIm[p] , dΣ_dRe[r] , dΣ_dIm[r] ]
+        """
+    dΣ_dRe_p = np.array([ (1/z**2) * np.real( Π[j][1]/(z-Π[j][0])**2 ) for j in range(Π.shape[0]) ])
+    dΣ_dIm_p = np.array([ (1/z**2) * np.real( 1j*Π[j][1]/(z-Π[j][0])**2 ) for j in range(Π.shape[0]) ])
+    dΣ_dRe_r = np.array([ (1/z**2) * np.real( 1.0/(z-Π[j][0]) ) for j in range(Π.shape[0]) ])
+    dΣ_dIm_r = np.array([ (1/z**2) * np.real( 1j/(z-Π[j][0])) for j in range(Π.shape[0]) ])
+    
+    return  np.concatenate( ( dΣ_dRe_p, dΣ_dIm_p,  dΣ_dRe_r, dΣ_dIm_r ) )
+
+
+def multipoles_real_vector_Π(Π):
+    """
+        Take a set of multipoles (p_j, r_j), and convert then into a vector of real parameters multipole: [Re[p_j] ; Im[p_j] ; Re[r_j] ; Im[r_j]]
+        
+        inputs
+        ----------
+        Π :  Multipole Parameters [{pole, residue}], for poles in the lower half of the complex plane (in the {E,+} sheet of the Rieman surface).
+        """
+    N_p = Π.shape[0]
+    Π_real_vector = np.zeros(4*N_p)
+    for j in range(Π.shape[0]):
+        Π_real_vector[j] = np.real(Π[j][0])
+        Π_real_vector[N_p + j] = np.imag(Π[j][0])
+        Π_real_vector[2*N_p + j] = np.real(Π[j][1])
+        Π_real_vector[3*N_p + j] = np.imag(Π[j][1])
+    return Π_real_vector
+
+def multipoles_set_Π(Π_real_vector):
+    """
+        Take a set of multipoles (p_j, r_j), and convert then into a vector of real parameters multipole: [Re[p_j] ; Im[p_j] ; Re[r_j] ; Im[r_j]]
+        
+        inputs
+        ----------
+        Π :  Multipole Parameters [{pole, residue}], for poles in the lower half of the complex plane (in the {E,+} sheet of the Rieman surface).
+        """
+    N_p = np.int(Π_real_vector.shape[0]/4)
+    Π = complex(0.0)*np.zeros([N_p , 2])
+    for j in range(Π.shape[0]):
+        Π[j][0] = Π_real_vector[j] + 1j*Π_real_vector[N_p + j]
+        Π[j][1] = Π_real_vector[2*N_p + j] + 1j*Π_real_vector[3*N_p + j]
+    return Π
 
 
 def z_space_Σγ(z, Γ): ## The most simple SLBW caputre resonance, with BS approximation
@@ -299,8 +351,7 @@ def analytic_Σγ(z, Γ): ## The most simple SLBW caputre resonance, with BS app
 
 def analytic_dΣγ_dΓ(z, Γ):
     """
-        Derivative of capture cross section with respect to resonance
-        parameters
+        Derivative of SLBW (with BS approximation) capture cross section with respect to resonance parameters Γ
         
         Parameters
         ----------
