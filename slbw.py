@@ -208,6 +208,39 @@ def exact_poles_and_residues_differentials_dΠ_dΓ(Γ):
     return dp_dΓ , dr_dΓ
 
 
+def mp_sens_rp(Γ):
+    """ Multipole sensitivities to resonance parameters
+
+        Parameters
+        ----------
+        Γ :  Resonance Parameters [Eλ resonance energy, Γn neutron width, Γγ gamma width]
+        
+        Returns
+        -------
+        dΠ_dΓ :  Multipole Parameters [{pole, residue}], for poles in the lower half of the complex plane (in the {E,+} sheet of the Rieman surface).
+        """
+    ελ = Γ[0] - 1j*(Γ[1]+Γ[2])/2
+    r1 = 1j*np.pi*Γ[1]*Γ[2]/(ρ0**2*Γ[0]**0.5*(Γ[1]+ Γ[2]))
+    p1 = np.sqrt(ελ)
+
+    dp1_dEλ = 1/(2*p1)
+    dr1_dEλ = - r1/(2*Γ[0])
+
+    dp1_dΓn = -1j/(4*p1)
+    dr1_dΓn = r1*( 1/Γ[1] - 1/(Γ[1]+Γ[2]) )
+
+    dp1_dΓγ = -1j/(4*p1)
+    dr1_dΓγ = r1*( 1/Γ[2] - 1/(Γ[1]+Γ[2]) )
+
+    # ret_arr = np.array([[dp1_dEλ/p1, dr1_dEλ/r1, -dp1_dEλ/p1,  dr1_dEλ/r1],
+    #                     [dp1_dΓn/p1, dr1_dΓn/r1, -dp1_dΓn/p1,  dr1_dΓn/r1],
+    #                     [dp1_dΓγ/p1, dr1_dΓγ/r1, -dp1_dΓγ/p1,  dr1_dΓγ/r1]])
+    ret_arr = np.array([[dp1_dEλ, dr1_dEλ, -dp1_dEλ,  dr1_dEλ],
+                        [dp1_dΓn, dr1_dΓn, -dp1_dΓn,  dr1_dΓn],
+                        [dp1_dΓγ, dr1_dΓγ, -dp1_dΓγ,  dr1_dΓγ]])
+    return ret_arr
+
+
 def multipole_Σ(z, Π): ## The most simple SLBW caputre resonance, with BS approximation
     """
         Evaluate SLBW capture cross section (with BS approximation)
@@ -279,7 +312,10 @@ def multipole_dΣ_dΠ(z, Π): ## The most simple SLBW caputre resonance, with BS
     dΣ_dRe_r = np.array([ (1/z**2) * np.real( 1.0/(z-Π[j][0]) ) for j in range(Π.shape[0]) ])
     dΣ_dIm_r = np.array([ (1/z**2) * np.real( 1j/(z-Π[j][0])) for j in range(Π.shape[0]) ])
     
-    return  np.concatenate( ( dΣ_dRe_p, dΣ_dIm_p,  dΣ_dRe_r, dΣ_dIm_r ) )
+    # return  np.concatenate( ( dΣ_dRe_p, dΣ_dIm_p,  dΣ_dRe_r, dΣ_dIm_r ) )
+    return   np.array([dΣ_dRe_p[0], dΣ_dRe_r[0], dΣ_dRe_p[1], dΣ_dRe_r[1],
+                       dΣ_dIm_p[0], dΣ_dIm_r[0], dΣ_dIm_p[1], dΣ_dIm_r[1]])
+
 
 
 def multipoles_real_vector_Π(Π):
