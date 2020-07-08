@@ -58,7 +58,8 @@ def normal(mu, sigma, x):
     return (1/((2*np.pi)**0.5 * sigma))*np.exp(-0.5*(1/sigma*(x-mu))**2)
 
 ### Problem parameters ###
-E_0 = 3.674280 # [eV] Energy for histogram plots
+# E_0 = 3.674280 # [eV] Energy for histogram plots
+E_0 = 6.674280 # [eV] Energy for histogram plots
 z_0 = E_0**0.5
 N_g = 10000 # Number of energy groups
 
@@ -125,6 +126,7 @@ ax1.plot(bins, Σγ_local_propagation, '--r', label='1st order sensitivity analy
 
 n, bins, patches = ax1.hist(Σγ_hist_Π, num_bins, density=1,
                             label='σ(Π, E_0) using Cov_Π from Sensitivity', alpha=fig_alpha)
+ax1.axvline(mean_Σγ_Π, color='r', label='MP Sensitivity Sample Mean')
 
 # add a 1st order sensitivity line - Multipole
 Π_Σγ_mean = multipole_Σ(z_0, μ_Π_U238)
@@ -133,9 +135,11 @@ mp_sens = multipole_dΣ_dΠ(z_0, μ_Π_U238)
 Π_Σγ_local_propagation = normal(Π_Σγ_mean, Π_Σγ_sigma_at_E0, bins)
 
 ax1.plot(bins, Π_Σγ_local_propagation, '--b', label='1st order snesitivity analysis - Π')
+ax1.axvline(mean_Σγ, color='k', label='Resonances Sample Mean')
 
 n, bins, patches = ax1.hist(Σγ_hist_Π_mc, num_bins, density=1,
                             label='σ(Π, E_0) using Π from Γ sample conversion', alpha=fig_alpha)
+ax1.axvline(mean_Σγ_Π_mc, color='g', label='Exact conversion of resonance samples mean')
 
 # Labels
 ax1.legend()
@@ -173,17 +177,17 @@ ax5.figure.colorbar(im2)
 ax5.set_title('Π Correlation (Blanks probably zero division)')
 fig.tight_layout()
 
-# # Plot sampled cross sections
-# energies = np.logspace(-3,3,1000)
-# fig2 = plt.figure()
-# ax4 = fig2.add_subplot(111)
-# mp_xs = [multipole_Σ(energy**0.5, μ_Π_U238) for energy in energies]
-# ax4.plot(energies, mp_xs, label='mean')
-# for i in range(100):
-#     Π_for_plotting = join_complex(Π_samples[i]).reshape((2,2))
-#     ax4.plot(energies, [multipole_Σ(energy**0.5, Π_for_plotting) for energy in energies], alpha=0.1)
-# ax4.set_xscale('log')
-# ax4.set_yscale('log')
-# ax4.legend()
+# Plot sampled cross sections
+energies = np.logspace(-3,3,10000)
+fig2 = plt.figure()
+ax4 = fig2.add_subplot(111)
+mp_xs = [multipole_Σ(energy**0.5, μ_Π_U238) for energy in energies]
+ax4.plot(energies, mp_xs, label='mean')
+for i in range(100):
+    Π_for_plotting = join_complex(Π_samples[i]).reshape((2,2))
+    ax4.plot(energies, [multipole_Σ(energy**0.5, Π_for_plotting) for energy in energies], alpha=0.1)
+ax4.set_xscale('log')
+ax4.set_yscale('log')
+ax4.legend()
 
 plt.show()
